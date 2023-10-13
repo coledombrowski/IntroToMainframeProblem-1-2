@@ -1,0 +1,85 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DEMO1CBL.
+       AUTHOR.     COLE DOMBROWSKI.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+            SELECT VENDOR-INPUT-FILE  ASSIGN TO  HELLO.
+
+            SELECT VENDOR-OUTPUT-FILE ASSIGN TO  GOODBYE.
+       DATA DIVISION.
+       FILE SECTION.
+       FD  VENDOR-INPUT-FILE RECORDING MODE IS F.
+       01                            PIC X(80).
+       FD  VENDOR-OUTPUT-FILE RECORDING MODE IS F.
+       01  PRINT-ONE-OUTPUT-LINE            PIC X(132).
+
+       WORKING-STORAGE SECTION.
+       01  WORKING-VARIABLES.
+           05  EOF-VENDOR-WS           PIC X(3)     VALUE 'NO'.
+
+
+
+      ****************************************************************
+      *THE INPUT FIELDS ARE SPECIFIED BELOW
+      *NOTE THAT THE DOL-AMOUNT-IN FIELD IS NOT EDITED
+      ****************************************************************
+       01  VENDOR-INPUT-RECORD.
+           05  VENDOR-NUM-IN           PIC 9(5).
+           05  COMPANY-DATA-IN         PIC X(15).
+           05  DOL-AMOUNT-IN           PIC S9(6)V99.
+           05  FILLER                  PIC X(12).
+           05  TRANS-DATE-IN           PIC X(8).
+           05  NAME-IN                 PIC X(23).
+
+      ****************************************************************
+      *THE INDIVIDUAL FIELDS TO BE PRINTED ON EACH LINE ARE SPECIFIED
+      *BELOW. NOTE THAT THE DOL-AMOUNT-OUT FIELD IS EDITED.
+      ****************************************************************
+       01  DETAIL-LINE-SETUP.
+           05  FILLER                  PIC X.
+           05                          PIC X(11) VALUE SPACE.
+           05  TRANS-DATE-OUT          PIC XX/XX/XXXX.
+           05                          PIC X(5) VALUE SPACE.
+           05  VENDOR-NUM-OUT          PIC 9(5).
+           05                          PIC X(5)  VALUE SPACE.
+           05  DOL-AMOUNT-OUT          PIC $$,$$$,$$9.99BCR.
+           05                          PIC X(80)  VALUE SPACE.
+
+
+       PROCEDURE DIVISION.
+
+       100-MAINLINE.
+           PERFORM 200-OPEN
+           PERFORM 300-PROCESS UNTIL EOF-VENDOR-WS = 'YES'
+           PERFORM 900-CLOSE
+           STOP RUN.
+
+
+       200-OPEN.
+           OPEN INPUT VENDOR-INPUT-FILE OUTPUT VENDOR-OUTPUT-FILE
+           PERFORM 250-READ-ONE-RECORD.
+
+
+       250-READ-ONE-RECORD.
+           READ VENDOR-INPUT-FILE INTO  VENDOR-INPUT-RECORD
+              AT END MOVE 'YES' TO EOF-VENDOR-WS
+
+           END-READ.
+
+       300-PROCESS.
+
+           MOVE  TRANS-DATE-IN    TO  TRANS-DATE-OUT
+           MOVE  VENDOR-NUM-IN    TO  VENDOR-NUM-OUT
+           MOVE  DOL-AMOUNT-IN    TO  DOL-AMOUNT-OUT
+
+           MOVE DETAIL-LINE-SETUP TO PRINT-ONE-OUTPUT-LINE
+           WRITE PRINT-ONE-OUTPUT-LINE  AFTER 1
+
+           PERFORM 250-READ-ONE-RECORD.
+
+       900-CLOSE.
+
+           CLOSE  VENDOR-INPUT-FILE  VENDOR-OUTPUT-FILE.

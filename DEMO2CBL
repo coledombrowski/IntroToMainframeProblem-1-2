@@ -1,0 +1,77 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DEMO2CBL.
+       AUTHOR.     COLE DOMBROWSKI.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+            SELECT PAYROLL-INPUT-FILE  ASSIGN TO  RATFINK.
+
+            SELECT PAYROLL-OUTPUT-FILE ASSIGN TO  STUPID.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  PAYROLL-INPUT-FILE RECORDING MODE IS F.
+       01                            PICTURE X(80).
+       FD  PAYROLL-OUTPUT-FILE RECORDING MODE IS F.
+       01  PRINT-OUT-ONE-LINE        PICTURE X(132).
+
+       WORKING-STORAGE SECTION.
+       01  WORKING-VARIABLES.
+           05  EOF-PAYROLL-WS      PICTURE X(3)     VALUE 'NO'.
+           05  GROSS-PAY-WS        PICTURE S9(5)V99 VALUE ZERO.
+
+       01  PAYROLL-INPUT-RECORD.
+           05  EMP-NAME-IN             PIC X(10).
+           05  EMP-HOURS-IN            PIC 99.
+           05  EMP-RATE-IN             PIC S999V99.
+
+       01  DETAIL-LINE-SETUP.
+           05  FILLER                  PIC X     VALUE SPACE.
+           05  EMP-NAME-OUT            PIC X(10).
+           05                          PIC X(10) VALUE SPACE.
+           05  GROSS-PAY-OUT           PIC $$$,$$9.99.
+           05                          PIC X(101) VALUE SPACE.
+       01  COLUMN-HEADER-LINE.
+           05  FILLER            PIC X     VALUE SPACES.
+           05                    PIC X(3)  VALUE SPACES.
+           05                    PIC X(18) VALUE 'NAME'.
+           05                    PIC X(18) VALUE 'GROSS PAY'.
+           05                    PIC X(92) VALUE SPACE.
+       PROCEDURE DIVISION.
+       100-MAINLINE.
+           PERFORM    200-OPEN
+           PERFORM    300-PROCESS UNTIL EOF-PAYROLL-WS = 'YES'
+           PERFORM    900-CLOSE
+           STOP RUN.
+
+       200-OPEN.
+           OPEN INPUT PAYROLL-INPUT-FILE OUTPUT PAYROLL-OUTPUT-FILE
+           PERFORM     250-READ-ONE-RECORD
+
+           PERFORM 500-HEADER.
+
+       250-READ-ONE-RECORD.
+           READ PAYROLL-INPUT-FILE INTO PAYROLL-INPUT-RECORD
+              AT END MOVE 'YES' TO EOF-PAYROLL-WS
+           END-READ.
+
+       300-PROCESS.
+           COMPUTE GROSS-PAY-WS = EMP-HOURS-IN * EMP-RATE-IN
+
+           MOVE  GROSS-PAY-WS     TO    GROSS-PAY-OUT
+
+           MOVE EMP-NAME-IN      TO EMP-NAME-OUT
+
+           MOVE  DETAIL-LINE-SETUP  TO  PRINT-OUT-ONE-LINE
+           WRITE PRINT-OUT-ONE-LINE AFTER 1
+
+           PERFORM     250-READ-ONE-RECORD.
+
+       500-HEADER.
+           MOVE COLUMN-HEADER-LINE TO PRINT-OUT-ONE-LINE
+           WRITE PRINT-OUT-ONE-LINE AFTER 2.
+
+       900-CLOSE.
+           CLOSE     PAYROLL-INPUT-FILE      PAYROLL-OUTPUT-FILE.
